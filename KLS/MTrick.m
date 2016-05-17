@@ -1,6 +1,5 @@
 function Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle)
-
-%%% 分开训练，Fs,Ft归一化为列，
+%%%Mtrick的方式
 G0 = [];
 for i = 1:length(TrainY)
     if TrainY(i) == 1
@@ -87,7 +86,7 @@ if start == 1
     Learn.TEM = 0; %tempered or not tempered
     [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
     xlswrite(strcat('pwz_common','.xls'),Pw_z);
-    csvwrite(strcat('pwz_common','.pwz'),Pw_z);
+%     csvwrite(strcat('pwz_common','.pwz'),Pw_z);
 end
 t2 = clock;
 
@@ -101,23 +100,26 @@ Gs = G0;
 
 Xs = TrainX;
 Xt = TestX;
-Xs = Xs/sum(sum(Xs));
-Xt = Xt/sum(sum(Xt));
-
+% Xs = Xs/sum(sum(Xs));
+% Xt = Xt/sum(sum(Xt));
+for i = 1:size(TrainX,2)
+    TrainX(:,i) = TrainX(:,i)/sum(TrainX(:,i));
+end
+for i = 1:size(TestX,2)
+    TestX(:,i) = TestX(:,i)/sum(TestX(:,i));
+end
 b = 1/(size(Gs,1));
 
-SS = ones(size(Fs,2),size(Gs,2));
-for i = 1:size(SS,1)
-    SS(i,:) = SS(i,:)/sum(SS(i,:));
+S = ones(size(Fs,2),size(Gs,2));
+for i = 1:size(S,1)
+    S(i,:) = S(i,:)/sum(S(i,:));
 end
-Ss = SS;
-St = SS;
-fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs');
+
+fvalue = trace(Xs'*Xs-2*Xs'*Fs*S*Gs'+Gs*S'*Fs'*Fs*S*Gs')+alpha*b*trace(Gs*Gs'-2*Gs*G0'+G0*G0')+beta*trace(Xt'*Xt-2*Xt'*Ft*S*Gt'+Gt*S'*Ft'*Ft*S*Gt');
 tempf = 0;
 for circleID = 1:numCircle
-    %%Fs
-    tempM = (Fs*Ss*Gs'*Gs*Ss');
-    tempM1 = Xs*Gs*Ss';
+    tempM = (Fs*S*Gs'*Gs*S');
+    tempM1 = Xs*Gs*S';
     for i = 1:size(Fs,1)
         for j = 1:size(Fs,2)
             if tempM(i,j)~=0
@@ -127,59 +129,49 @@ for circleID = 1:numCircle
             end
         end
     end
-     for i = 1:size(Fs,1)
-        if sum(Fs(i,:))~= 0
-            Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
-        else
-            for j = 1:size(Fs,2)
-                Fs(i,j) = 1/(size(Fs,2));
-            end
-        end
-     end
-%     for i = 1:size(Fs,2)
-%         if sum(Fs(:,i))~= 0
-%             Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
+%     for i = 1:size(Fs,1)
+%         if sum(Fs(i,:))~= 0
+%             Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
 %         else
 %             for j = 1:size(Fs,2)
 %                 Fs(i,j) = 1/(size(Fs,2));
 %             end
 %         end
-%      end
-    %%Ss
-    tempM = (Fs'*Fs*Ss*Gs'*Gs);
-    tempM1 = Fs'*Xs*Gs;
-    for i = 1:size(Ss,1)
-        for j = 1:size(Ss,2)
-            if tempM(i,j)~=0
-                Ss(i,j) = Ss(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Ss(i,j) = 0;
+%     end
+    %%zwj
+    for i = 1:size(Fs,2)
+        if sum(Fs(:,i))~= 0
+            Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
+        else
+            for j = 1:size(Fs,2)
+                Fs(i,j) = 1/(size(Fs,2));
             end
         end
     end
-
-    fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs');
-    if circleID == 1
-        tempf = fvalue;
-    end
-    if circleID > 1
-        if abs(tempf - fvalue) < 10^(-10)
-            break;
+    %%zwj
+    tempM = (Gs*S'*Fs'*Fs*S+alpha*b*Gs);
+    tempM1 = Xs'*Fs*S + alpha*b*G0;
+    for i = 1:size(Gs,1)
+        for j = 1:size(Gs,2)
+            if tempM(i,j)~=0
+                Gs(i,j) = Gs(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                Gs(i,j) = 0;
+            end
         end
-        tempf = fvalue;
     end
-   
-   
-end
-
-%%%%zwj  target
-St = Ss;
-fvalue = trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt');
-tempf = 0;
-for circleID = 1:numCircle
-    %%  Ft
-    tempM = (Ft*St*Gt'*Gt*St');
-    tempM1 = Xt*Gt*St';
+    for i = 1:size(Gs,1)
+        if sum(Gs(i,:))~= 0
+            Gs(i,:) = Gs(i,:)/sum(Gs(i,:));
+        else
+            for j = 1:size(Gs,2)
+                Gs(i,j) = 1/(size(Gs,2));
+            end
+        end
+    end
+    
+    tempM = (Ft*S*Gt'*Gt*S');
+    tempM1 = Xt*Gt*S';
     for i = 1:size(Ft,1)
         for j = 1:size(Ft,2)
             if tempM(i,j)~=0
@@ -189,40 +181,28 @@ for circleID = 1:numCircle
             end
         end
     end
-     for i = 1:size(Ft,1)
-        if sum(Ft(i,:))~= 0
-            Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
-        else
-            for j = 1:size(Ft,2)
-                Ft(i,j) = 1/(size(Ft,2));
-            end
-        end
-    end
-%     for i = 1:size(Ft,2)
-%         if sum(Ft(:,i))~= 0
-%             Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
+%     for i = 1:size(Ft,1)
+%         if sum(Ft(i,:))~= 0
+%             Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
 %         else
 %             for j = 1:size(Ft,2)
 %                 Ft(i,j) = 1/(size(Ft,2));
 %             end
 %         end
 %     end
-     %%St
-    tempM = (Ft'*Ft*St*Gt'*Gt);
-    tempM1 = Ft'*Xt*Gt;
-    for i = 1:size(St,1)
-        for j = 1:size(St,2)
-            if tempM(i,j)~=0
-                St(i,j) = St(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                St(i,j) = 0;
+    %%zwj
+    for i = 1:size(Ft,2)
+        if sum(Ft(:,i))~= 0
+            Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
+        else
+            for j = 1:size(Ft,2)
+                Ft(i,j) = 1/(size(Ft,2));
             end
         end
     end
- 
-    %% Gt
-    tempM = (Gt*St'*Ft'*Ft*St);
-    tempM1 = Xt'*Ft*St;
+    %%
+    tempM = (Gt*S'*Ft'*Ft*S);
+    tempM1 = Xt'*Ft*S;
     for i = 1:size(Gt,1)
         for j = 1:size(Gt,2)
             if tempM(i,j)~=0
@@ -242,17 +222,21 @@ for circleID = 1:numCircle
         end
     end
     
-    fvalue = trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt');
-    if circleID == 1
-        tempf = fvalue;
-    end
-    if circleID > 1
-        if abs(tempf - fvalue) < 10^(-13)
-            break;
+    
+    tempM = (Fs'*Fs*S*Gs'*Gs+beta*Ft'*Ft*S*Gt'*Gt);
+    tempM1 = Fs'*Xs*Gs+beta*Ft'*Xt*Gt;
+    for i = 1:size(S,1)
+        for j = 1:size(S,2)
+            if tempM(i,j)~=0
+                S(i,j) = S(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                S(i,j) = 0;
+            end
         end
-        tempf = fvalue;
     end
-   
+    
+    fvalue = trace(Xs'*Xs-2*Xs'*Fs*S*Gs'+Gs*S'*Fs'*Fs*S*Gs')+alpha*b*trace(Gs*Gs'-2*Gs*G0'+G0*G0')+beta*trace(Xt'*Xt-2*Xt'*Ft*S*Gt'+Gt*S'*Ft'*Ft*S*Gt');
+    
     pp = [];
     for i = 1:length(TestY)
         if sum(Gt(i,:))~= 0
@@ -262,12 +246,22 @@ for circleID = 1:numCircle
         end
     end
     Results(circleID) = getResult(pp,TestY);
-    fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
+    fprintf('the %g iteration is %g,the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
+    
+    if circleID == 1
+        tempf = fvalue;
+    end
+    if circleID > 1
+        if abs(tempf - fvalue) < 10^(-13)
+            break;
+        end
+        tempf = fvalue;
+    end
 end
-% csvwrite(strcat('St.pwz'),St);
-% x = 0:1:size(St,1)-1;
-% y1 = St(:,1);
-% y2 = St(:,2);
+% csvwrite(strcat('S.pwz'),S);
+% x = 0:1:size(S,1)-1;
+% y1 = S(:,1);
+% y2 = S(:,2);
 % figure
 % plot(x,y1,'r',x,y2,'b');
 % grid on
