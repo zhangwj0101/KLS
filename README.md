@@ -11,3 +11,4 @@
 | KLS3| 分开 | 不变 | 行为一 |
 | KLS4 | Mtrick | 变化 | 列为一 |
 | KLS5 | Mtrick | 变化 | 行为一 |
+| KLS6 | Mtrick+联合 | 变化 | 列为一 |
