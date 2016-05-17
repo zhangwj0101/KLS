@@ -127,24 +127,24 @@ for circleID = 1:numCircle
             end
         end
     end
-%      for i = 1:size(Fs,1)
-%         if sum(Fs(i,:))~= 0
-%             Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
-%         else
-%             for j = 1:size(Fs,2)
-%                 Fs(i,j) = 1/(size(Fs,2));
-%             end
-%         end
-%      end
-    for i = 1:size(Fs,2)
-        if sum(Fs(:,i))~= 0
-            Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
+     for i = 1:size(Fs,1)
+        if sum(Fs(i,:))~= 0
+            Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
         else
             for j = 1:size(Fs,2)
                 Fs(i,j) = 1/(size(Fs,2));
             end
         end
      end
+%     for i = 1:size(Fs,2)
+%         if sum(Fs(:,i))~= 0
+%             Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
+%         else
+%             for j = 1:size(Fs,2)
+%                 Fs(i,j) = 1/(size(Fs,2));
+%             end
+%         end
+%      end
     %%Ss
     tempM = (Fs'*Fs*Ss*Gs'*Gs);
     tempM1 = Fs'*Xs*Gs;
@@ -189,24 +189,24 @@ for circleID = 1:numCircle
             end
         end
     end
-%      for i = 1:size(Ft,1)
-%         if sum(Ft(i,:))~= 0
-%             Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
-%         else
-%             for j = 1:size(Ft,2)
-%                 Ft(i,j) = 1/(size(Ft,2));
-%             end
-%         end
-%     end
-    for i = 1:size(Ft,2)
-        if sum(Ft(:,i))~= 0
-            Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
+     for i = 1:size(Ft,1)
+        if sum(Ft(i,:))~= 0
+            Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
         else
             for j = 1:size(Ft,2)
                 Ft(i,j) = 1/(size(Ft,2));
             end
         end
     end
+%     for i = 1:size(Ft,2)
+%         if sum(Ft(:,i))~= 0
+%             Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
+%         else
+%             for j = 1:size(Ft,2)
+%                 Ft(i,j) = 1/(size(Ft,2));
+%             end
+%         end
+%     end
      %%St
     tempM = (Ft'*Ft*St*Gt'*Gt);
     tempM1 = Ft'*Xt*Gt;
