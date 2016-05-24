@@ -69,12 +69,11 @@ SS = ones(numK,2);
 for i = 1:size(SS,1)
     SS(i,:) = SS(i,:)/sum(SS(i,:));
 end
-GG = [G0;Gt];
-
+Gs = G0;
 for circleID = 1:numCircle
     %%FF
-    tempM = (FF*SS*GG'*GG*SS');
-    tempM1 = XX*GG*SS';
+    tempM = (FF*SS*Gs'*Gs*SS') + FF*SS*Gt'*Gt*SS';
+    tempM1 = Xs*Gs*SS' + Xt*Gt*SS';
     for i = 1:size(FF,1)
         for j = 1:size(FF,2)
             if tempM(i,j)~=0
@@ -95,8 +94,8 @@ for circleID = 1:numCircle
         end
     end
     %%SS
-    tempM = (FF'*FF*SS*GG'*GG);
-    tempM1 = FF'*XX*GG;
+    tempM = (FF'*FF*SS*Gs'*Gs) +FF'*FF*SS*Gt'*Gt ;
+    tempM1 = FF'*Xs*Gs+FF'*Xt*Gt;
     for i = 1:size(SS,1)
         for j = 1:size(SS,2)
             if tempM(i,j)~=0
@@ -108,37 +107,32 @@ for circleID = 1:numCircle
     end
    
     %% Gt
-    tempM = (GG*SS'*FF'*FF*SS);
-    tempM1 = XX'*FF*SS;
-    for i = 1:size(GG,1)
-        for j = 1:size(GG,2)
+    tempM = (Gt*SS'*FF'*FF*SS);
+    tempM1 = Xt'*FF*SS;
+    for i = 1:size(Gt,1)
+        for j = 1:size(Gt,2)
             if tempM(i,j)~=0
-                GG(i,j) = GG(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                Gt(i,j) = Gt(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                GG(i,j) = 0;
+                Gt(i,j) = 0;
             end
         end
     end
     
-    for i = 1:size(GG,1)
-        if sum(GG(i,:))~= 0
-            GG(i,:) = GG(i,:)/sum(GG(i,:));
+    for i = 1:size(Gt,1)
+        if sum(Gt(i,:))~= 0
+            Gt(i,:) = Gt(i,:)/sum(Gt(i,:));
         else
-            for j = 1:size(GG,2)
-                GG(i,j) = 1/(size(GG,2));
+            for j = 1:size(Gt,2)
+                Gt(i,j) = 1/(size(Gt,2));
             end
         end
     end
     
-    for i = 1:size(G0,1)
-        GG(i,:) = G0(i,:);
-    end
-  
     pp = [];
     for i = 1:length(TestY)
-        idx  = size(G0,1)+i;
-        if sum(GG(idx,:))~= 0
-            pp(1,i) = GG(idx,1)/sum(GG(idx,:));
+        if sum(Gt(i,:))~= 0
+            pp(1,i) = Gt(i,1)/sum(Gt(i,:));
         else
             pp(1,i) = 0.5;
         end
