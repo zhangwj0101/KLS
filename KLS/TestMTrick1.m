@@ -1,13 +1,22 @@
 clear all;
 
-TrainX = load('C:/mydata_add/en_de_dvd_music/Train.data');
+% TrainX = load('C:/mydata_add/en_de_dvd_music/Train.data');
+% TrainX = spconvert(TrainX);
+% TrainY = load('C:/mydata_add/en_de_dvd_music/Train.label');
+% TrainY = TrainY';
+% TestX = load('C:/mydata_add/en_de_dvd_music/Test.data');
+% TestX = spconvert(TestX);
+% %%
+% TestY = load('C:/mydata_add/en_de_dvd_music/Test.label');
+% TestY = TestY';
+TrainX = load('C:\mydata_cut\en_jp_dvd_books/Train.data');
 TrainX = spconvert(TrainX);
-TrainY = load('C:/mydata_add/en_de_dvd_music/Train.label');
+TrainY = load('C:\mydata_cut\en_jp_dvd_books/Train.label');
 TrainY = TrainY';
-TestX = load('C:/mydata_add/en_de_dvd_music/Test.data');
+TestX = load('C:\mydata_cut\en_jp_dvd_books/Test.data');
 TestX = spconvert(TestX);
 %%
-TestY = load('C:/mydata_add/en_de_dvd_music/Test.label');
+TestY = load('C:\mydata_cut\en_jp_dvd_books/Test.label');
 TestY = TestY';
 
 for id = 1:length(TrainY)
@@ -28,7 +37,8 @@ numK = 50;
 numCircle = 180;
 best = [];
 index= 1;
-
+Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+return ;
 for tempalph=0:0.5:10
     Results = MTrick(TrainX,TrainY,TestX,TestY,tempalph,beta,numK,numCircle);
     [res] = xlsread(strcat('Results_alpha.xls'));

@@ -85,15 +85,15 @@ if start == 1
     Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
     Learn.TEM = 0; %tempered or not tempered
     [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-    xlswrite(strcat('pwz_common','.xls'),Pw_z);
+%     xlswrite(strcat('pwz_common','.xls'),Pw_z);
 %     csvwrite(strcat('pwz_common','.pwz'),Pw_z);
 end
 t2 = clock;
 
 %% Following are Initializaitons
-% pwz = xlsread(strcat('pwz_common','.xls'));
-pwz = csvread(strcat('pwz_common','.pwz'));
-Fs = pwz;
+% Pw_z = xlsread(strcat('pwz_common','.xls'));
+% pwz = csvread(strcat('pwz_common','.pwz'));
+Fs = Pw_z;
 Ft = Fs;
 
 Gs = G0;
@@ -102,11 +102,11 @@ Xs = TrainX;
 Xt = TestX;
 % Xs = Xs/sum(sum(Xs));
 % Xt = Xt/sum(sum(Xt));
-for i = 1:size(TrainX,2)
-    TrainX(:,i) = TrainX(:,i)/sum(TrainX(:,i));
+for i = 1:size(Xs,2)
+    Xs(:,i) = Xs(:,i)/sum(Xs(:,i));
 end
-for i = 1:size(TestX,2)
-    TestX(:,i) = TestX(:,i)/sum(TestX(:,i));
+for i = 1:size(Xt,2)
+    Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
 end
 b = 1/(size(Gs,1));
 
@@ -129,15 +129,6 @@ for circleID = 1:numCircle
             end
         end
     end
-%     for i = 1:size(Fs,1)
-%         if sum(Fs(i,:))~= 0
-%             Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
-%         else
-%             for j = 1:size(Fs,2)
-%                 Fs(i,j) = 1/(size(Fs,2));
-%             end
-%         end
-%     end
     %%zwj
     for i = 1:size(Fs,2)
         if sum(Fs(:,i))~= 0
@@ -181,15 +172,6 @@ for circleID = 1:numCircle
             end
         end
     end
-%     for i = 1:size(Ft,1)
-%         if sum(Ft(i,:))~= 0
-%             Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
-%         else
-%             for j = 1:size(Ft,2)
-%                 Ft(i,j) = 1/(size(Ft,2));
-%             end
-%         end
-%     end
     %%zwj
     for i = 1:size(Ft,2)
         if sum(Ft(:,i))~= 0
@@ -197,6 +179,17 @@ for circleID = 1:numCircle
         else
             for j = 1:size(Ft,2)
                 Ft(i,j) = 1/(size(Ft,2));
+            end
+        end
+    end
+      tempM = (Fs'*Fs*S*Gs'*Gs+beta*Ft'*Ft*S*Gt'*Gt);
+    tempM1 = Fs'*Xs*Gs+beta*Ft'*Xt*Gt;
+    for i = 1:size(S,1)
+        for j = 1:size(S,2)
+            if tempM(i,j)~=0
+                S(i,j) = S(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                S(i,j) = 0;
             end
         end
     end
@@ -218,19 +211,6 @@ for circleID = 1:numCircle
         else
             for j = 1:size(Gt,2)
                 Gt(i,j) = 1/(size(Gt,2));
-            end
-        end
-    end
-    
-    
-    tempM = (Fs'*Fs*S*Gs'*Gs+beta*Ft'*Ft*S*Gt'*Gt);
-    tempM1 = Fs'*Xs*Gs+beta*Ft'*Xt*Gt;
-    for i = 1:size(S,1)
-        for j = 1:size(S,2)
-            if tempM(i,j)~=0
-                S(i,j) = S(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                S(i,j) = 0;
             end
         end
     end
