@@ -40,23 +40,18 @@ for i = 1:length(TestY)
     Gt(i,2) = 1 - ptemp(i);
 end
 %%%%逻辑回归结束
+%%%NMF way
+r = numK;
+all = [TrainX TestX];
+[m,n] = size(all);
+Winit = abs(randn(m,r));
+Hinit = abs(randn(r,n));
+[W,H] = nmf(full(all),Winit,Hinit,0.0000000000001,25,8000);
 
-%%%%start PLSA
-fprintf('......start to learn PLSA model.........\n');
-DataSetX  = [TrainX TestX];
-Learn.Verbosity = 1;
-Learn.Max_Iterations = 20;
-Learn.heldout = .1; % for tempered EM only, percentage of held out data
-Learn.Min_Likelihood_Change = 1;
-Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-Learn.TEM = 0; %tempered or not tempered
-[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-%% Following are Initializaitons
-% Pw_z = xlsread(strcat('pwz_common','.xls'));
-
-Fs = Pw_z;
-Ft = Fs;
-Gs = G0;
+for id=1:size(W,2)
+    W(:,id) = W(:,id)/sum(W(:,id));
+end
+%%%%end NMF way
 Xs = TrainX;
 Xt = TestX;
 
@@ -66,126 +61,84 @@ end
 for i = 1:size(TestX,2)
     Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
 end
+XX = [Xs Xt];
+FF = W;
+% SS = S;
 
-b = 1/(size(Gs,1));
-%%%Init SS
-SS = ones(size(Fs,2),size(Gs,2));
+SS = ones(numK,2);
 for i = 1:size(SS,1)
     SS(i,:) = SS(i,:)/sum(SS(i,:));
 end
-Ss = SS;
-St = SS;
+GG = [G0;Gt];
 
-fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
-tempf = 0;
 for circleID = 1:numCircle
-    %%Fs
-    tempM = (Fs*Ss*Gs'*Gs*Ss');
-    tempM1 = Xs*Gs*Ss';
-    for i = 1:size(Fs,1)
-        for j = 1:size(Fs,2)
+    %%FF
+    tempM = (FF*SS*GG'*GG*SS');
+    tempM1 = XX*GG*SS';
+    for i = 1:size(FF,1)
+        for j = 1:size(FF,2)
             if tempM(i,j)~=0
-                Fs(i,j) = Fs(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                FF(i,j) = FF(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                Fs(i,j) = 0;
+                FF(i,j) = 0;
             end
         end
     end
-    for i = 1:size(Fs,2)
-        if sum(Fs(:,i))~= 0
-            Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
+
+    for i = 1:size(FF,2)
+        if sum(FF(:,i))~= 0
+            FF(:,i) = FF(:,i)/sum(FF(:,i));
         else
-            for j = 1:size(Fs,2)
-                Fs(i,j) = 1/(size(Fs,2));
+            for j = 1:size(FF,2)
+                FF(i,j) = 1/(size(FF,2));
             end
         end
     end
-    %%Ss
-    tempM = (Fs'*Fs*Ss*Gs'*Gs)+alpha*Ss;
-    tempM1 = Fs'*Xs*Gs+alpha*St;
-    for i = 1:size(Ss,1)
-        for j = 1:size(Ss,2)
+    %%SS
+    tempM = (FF'*FF*SS*GG'*GG);
+    tempM1 = FF'*XX*GG;
+    for i = 1:size(SS,1)
+        for j = 1:size(SS,2)
             if tempM(i,j)~=0
-                Ss(i,j) = Ss(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                SS(i,j) = SS(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                Ss(i,j) = 0;
+                SS(i,j) = 0;
             end
         end
     end
-    %%  Ft
-    tempM = (Ft*St*Gt'*Gt*St');
-    tempM1 = Xt*Gt*St';
-    for i = 1:size(Ft,1)
-        for j = 1:size(Ft,2)
-            if tempM(i,j)~=0
-                Ft(i,j) = Ft(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Ft(i,j) =0;
-            end
-        end
-    end
-    for i = 1:size(Ft,2)
-        if sum(Ft(:,i))~= 0
-            Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
-        else
-            for j = 1:size(Ft,2)
-                Ft(i,j) = 1/(size(Ft,2));
-            end
-        end
-    end
-    %%St
-    %%将Ss直接给St然后再迭代操作
-    %     St = Ss;
-    %%%新加
-    tempM = (Ft'*Ft*St*Gt'*Gt)+alpha*St;
-    tempM1 = Ft'*Xt*Gt+alpha*Ss;
-    for i = 1:size(St,1)
-        for j = 1:size(St,2)
-            if tempM(i,j)~=0
-                St(i,j) = St(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                St(i,j) = 0;
-            end
-        end
-    end
-    
+   
     %% Gt
-    tempM = (Gt*St'*Ft'*Ft*St);
-    tempM1 = Xt'*Ft*St;
-    for i = 1:size(Gt,1)
-        for j = 1:size(Gt,2)
+    tempM = (GG*SS'*FF'*FF*SS);
+    tempM1 = XX'*FF*SS;
+    for i = 1:size(GG,1)
+        for j = 1:size(GG,2)
             if tempM(i,j)~=0
-                Gt(i,j) = Gt(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                GG(i,j) = GG(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                Gt(i,j) = 0;
+                GG(i,j) = 0;
             end
         end
     end
-    for i = 1:size(Gt,1)
-        if sum(Gt(i,:))~= 0
-            Gt(i,:) = Gt(i,:)/sum(Gt(i,:));
+    
+    for i = 1:size(GG,1)
+        if sum(GG(i,:))~= 0
+            GG(i,:) = GG(i,:)/sum(GG(i,:));
         else
-            for j = 1:size(Gt,2)
-                Gt(i,j) = 1/(size(Gt,2));
+            for j = 1:size(GG,2)
+                GG(i,j) = 1/(size(GG,2));
             end
         end
     end
     
-    fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
-    if circleID == 1
-        tempf = fvalue;
+    for i = 1:size(G0,1)
+        GG(i,:) = G0(i,:);
     end
-    if circleID > 1
-        if abs(tempf - fvalue) < 10^(-12)
-            break;
-        end
-        tempf = fvalue;
-    end
-    
+  
     pp = [];
     for i = 1:length(TestY)
-        if sum(Gt(i,:))~= 0
-            pp(1,i) = Gt(i,1)/sum(Gt(i,:));
+        idx  = size(G0,1)+i;
+        if sum(GG(idx,:))~= 0
+            pp(1,i) = GG(idx,1)/sum(GG(idx,:));
         else
             pp(1,i) = 0.5;
         end
@@ -193,18 +146,5 @@ for circleID = 1:numCircle
     Results(circleID) = getResult(pp,TestY)*100;
     %     lvalues(circleID) = trace(Ft'*Ft-2*Ft'*Fs+Fs'*Fs);
     
-    fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
+    fprintf('the %g iteration is %g, the max is %g. \n',circleID,getResult(pp,TestY),max(Results));
 end
-return;
-
-xlswrite(strcat('Ft.xls'),[Ft']);
-xlswrite(strcat('St.xls'),St);
-xlswrite(strcat('St.xls'),Gt);
-% [res] = xlsread(strcat('iteration_F.xls'));
-% xlswrite(strcat('iteration_F.xls'),[res;Results;lvalues]);
-% x = 0:1:numCircle-1;
-% figure
-% plot(x,lvalues,'r');
-% grid on
-% xlabel('x');
-% ylabel('Results');
