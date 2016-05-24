@@ -28,7 +28,8 @@ numK = 50;
 numCircle = 180;
 best = [];
 index= 1;
-
+Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+return;
 for tempalph=0:0.5:10
     Results = MTrick(TrainX,TrainY,TestX,TestY,tempalph,beta,numK,numCircle);
     [res] = xlsread(strcat('Results_alpha.xls'));

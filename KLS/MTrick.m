@@ -63,30 +63,7 @@ fprintf('......start to learn PLSA model.........\n');
 start = 1;
 t1 = clock;
 
-%%Fs
-DataSetX  = [TrainX ];
-Learn.Verbosity = 1;
-Learn.Max_Iterations = 20;
-Learn.heldout = .1; % for tempered EM only, percentage of held out data
-Learn.Min_Likelihood_Change = 1;
-Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-Learn.TEM = 0; %tempered or not tempered
-[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-Fs = Pw_z;
-%%end Fs
-
-%%Ft
-DataSetX  = [TestX];
-Learn.Verbosity = 1;
-Learn.Max_Iterations = 20;
-Learn.heldout = .1; % for tempered EM only, percentage of held out data
-Learn.Min_Likelihood_Change = 1;
-Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-Learn.TEM = 0; %tempered or not tempered
-[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-Ft = Pw_z;
-%% end Ft
-
+% %%Fs
 % DataSetX  = [TrainX TestX];
 % Learn.Verbosity = 1;
 % Learn.Max_Iterations = 20;
@@ -95,21 +72,42 @@ Ft = Pw_z;
 % Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
 % Learn.TEM = 0; %tempered or not tempered
 % [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-% pwz = Pw_z;
-% Fs = pwz;
+% Fs = Pw_z;
 % Ft = Fs;
+% %%end Fs
+
+%%Ft
+% DataSetX  = [TestX];
+% Learn.Verbosity = 1;
+% Learn.Max_Iterations = 20;
+% Learn.heldout = .1; % for tempered EM only, percentage of held out data
+% Learn.Min_Likelihood_Change = 1;
+% Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
+% Learn.TEM = 0; %tempered or not tempered
+% [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
+% Ft = Pw_z;
+%% end Ft
+
+DataSetX  = [TrainX TestX];
+Learn.Verbosity = 1;
+Learn.Max_Iterations = 20;
+Learn.heldout = .1; % for tempered EM only, percentage of held out data
+Learn.Min_Likelihood_Change = 1;
+Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
+Learn.TEM = 0; %tempered or not tempered
+[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
+pwz = Pw_z;
+Fs = pwz;
+Ft = Fs;
 
 Gs = G0;
-
 Xs = TrainX;
 Xt = TestX;
-% Xs = Xs/sum(sum(Xs));
-% Xt = Xt/sum(sum(Xt));
 for i = 1:size(TrainX,2)
-    TrainX(:,i) = TrainX(:,i)/sum(TrainX(:,i));
+    Xs(:,i) = Xs(:,i)/sum(Xs(:,i));
 end
 for i = 1:size(TestX,2)
-    TestX(:,i) = TestX(:,i)/sum(TestX(:,i));
+    Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
 end
 
 b = 1/(size(Gs,1));
@@ -120,141 +118,9 @@ for i = 1:size(SS,1)
 end
 Ss = SS;
 St = SS;
-Gt = Gt0;
+% Gt = Gt0;
 % Gs = tempGt;
 %%%%zwj
-for circleID = 1:numCircle
-    %%Fs
-    tempM = (Fs*Ss*Gs'*Gs*Ss');
-    tempM1 = Xs*Gs*Ss';
-    for i = 1:size(Fs,1)
-        for j = 1:size(Fs,2)
-            if tempM(i,j)~=0
-                Fs(i,j) = Fs(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Fs(i,j) = 0;
-            end
-        end
-    end
-    for i = 1:size(Fs,2)
-        if sum(Fs(:,i))~= 0
-            Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
-        else
-            for j = 1:size(Fs,2)
-                Fs(i,j) = 1/(size(Fs,2));
-            end
-        end
-    end
-    %%Ss
-    tempM = (Fs'*Fs*Ss*Gs'*Gs);
-    tempM1 = Fs'*Xs*Gs;
-    for i = 1:size(Ss,1)
-        for j = 1:size(Ss,2)
-            if tempM(i,j)~=0
-                Ss(i,j) = Ss(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Ss(i,j) = 0;
-            end
-        end
-    end
-    %     %% Gs
-    tempM = (Gs*Ss'*Fs'*Fs*Ss);
-    tempM1 = Xs'*Fs*Ss;
-    for i = 1:size(Gs,1)
-        for j = 1:size(Gs,2)
-            if tempM(i,j)~=0
-                Gs(i,j) = Gs(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Gs(i,j) = 0;
-            end
-        end
-    end
-    for i = 1:size(Gs,1)
-        if sum(Gs(i,:))~= 0
-            Gs(i,:) = Gs(i,:)/sum(Gs(i,:));
-        else
-            for j = 1:size(Gs,2)
-                Gs(i,j) = 1/(size(Gs,2));
-            end
-        end
-    end
-    
-    fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs');
-    fprintf('the %g iteration . the value of  S objective is %g\n',circleID,fvalue);
-end
-
-
-for circleID = 1:numCircle
-    %%Fs
-    tempM = (Ft*St*Gt'*Gt*St');
-    tempM1 = Xt*Gt*St';
-    for i = 1:size(Ft,1)
-        for j = 1:size(Ft,2)
-            if tempM(i,j)~=0
-                Ft(i,j) = Ft(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Ft(i,j) = 0;
-            end
-        end
-    end
-    for i = 1:size(Ft,2)
-        if sum(Ft(:,i))~= 0
-            Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
-        else
-            for j = 1:size(Ft,2)
-                Ft(i,j) = 1/(size(Ft,2));
-            end
-        end
-    end
-    %%Ss
-    tempM = (Ft'*Ft*St*Gt'*Gt);
-    tempM1 = Ft'*Xt*Gt;
-    for i = 1:size(St,1)
-        for j = 1:size(St,2)
-            if tempM(i,j)~=0
-                St(i,j) = St(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                St(i,j) = 0;
-            end
-        end
-    end
-    %     %% Gs
-    tempM = (Gt*St'*Ft'*Ft*St);
-    tempM1 = Xt'*Ft*St;
-    for i = 1:size(Gt,1)
-        for j = 1:size(Gt,2)
-            if tempM(i,j)~=0
-                Gt(i,j) = Gt(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
-            else
-                Gt(i,j) = 0;
-            end
-        end
-    end
-    for i = 1:size(Gt,1)
-        if sum(Gt(i,:))~= 0
-            Gt(i,:) = Gt(i,:)/sum(Gt(i,:));
-        else
-            for j = 1:size(Gt,2)
-                Gt(i,j) = 1/(size(Gt,2));
-            end
-        end
-    end
-    
-    fvalue = trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt');
-    fprintf('the %g iteration . the value of T objective is %g\n',circleID,fvalue);
-end
-
-xlswrite(strcat('Fs.xls'),Fs);
-xlswrite(strcat('Ss.xls'),Ss);
-xlswrite(strcat('Gs.xls'),Gs);
-xlswrite(strcat('Ft.xls'),Ft);
-xlswrite(strcat('St.xls'),St);
-xlswrite(strcat('Gt.xls'),Gt);
-
-xlswrite(strcat('FsFt.xls'),Ft-Fs);
-xlswrite(strcat('SsSt.xls'),Ss-St);
-
-return ;
 
 for circleID = 1:70
     %%Fs
@@ -315,7 +181,7 @@ for circleID = 1:70
     fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs');
     fprintf('the %g iteration . the value of objective is %g\n',circleID,fvalue);
 end
-% St = SS;
+St = SS;
 % xlswrite(strcat('gs.xls'),[tempGt,Gs]);
 fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
