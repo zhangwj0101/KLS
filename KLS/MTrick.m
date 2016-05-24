@@ -59,8 +59,7 @@ Ft = Fs;
 Gs = G0;
 Xs = TrainX;
 Xt = TestX;
-Xs = Xs/sum(sum(Xs));
-Xt = Xt/sum(sum(Xt));
+
 for i = 1:size(TrainX,2)
     Xs(:,i) = Xs(:,i)/sum(Xs(:,i));
 end
