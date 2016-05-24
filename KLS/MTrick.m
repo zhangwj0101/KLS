@@ -11,6 +11,7 @@ for i = 1:length(TrainY)
     end
 end
 
+%%%Âß¼­»Ø¹é
 TrainXY = scale_cols(TrainX,TrainY);
 fprintf('......start to train logistic regression model.........\n');
 w00 = zeros(size(TrainXY,1),1);
@@ -26,21 +27,11 @@ for i = 1:length(lambda)
         se_lambda = lambda(i);
     end
 end
-% csvwrite(strcat('model_','test','.model'),wbest);
-% wbest = load(strcat('model_','test','.model'));
-
 ptemp = 1./(1 + exp(-wbest'*TrainX));
 oriA = getResult(ptemp,TrainY);
 fprintf('Test accuracy on source domain is :%g\n',oriA);
-% tempGt = [];
-% for i = 1:length(TrainY)
-%     tempGt(i,1) = ptemp(i);
-%     tempGt(i,2) = 1 - ptemp(i);
-% end
-% xlswrite(strcat('tempgt.xls'),tempGt);
-% return;
-
 ptemp = 1./(1 + exp(-wbest'*TestX));
+
 oriA = getResult(ptemp,TestY);
 fprintf('Test accuracy on target domain is :%g\n',oriA);
 Gt = [];
@@ -48,49 +39,43 @@ for i = 1:length(TestY)
     Gt(i,1) = ptemp(i);
     Gt(i,2) = 1 - ptemp(i);
 end
+%%%%Âß¼­»Ø¹é½áÊø
 
+%%%%start PLSA
 fprintf('......start to learn PLSA model.........\n');
-start = 1;
-t1 = clock;
-if start == 1
-    DataSetX  = [TrainX TestX];
-    Learn.Verbosity = 1;
-    Learn.Max_Iterations = 20;
-    Learn.heldout = .1; % for tempered EM only, percentage of held out data
-    Learn.Min_Likelihood_Change = 1;
-    Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-    Learn.TEM = 0; %tempered or not tempered
-    [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-    %     xlswrite(strcat('pwz_common','.xls'),Pw_z);
-    %     csvwrite(strcat('pwz_common','.pwz'),Pw_z);
-end
-t2 = clock;
-
+DataSetX  = [TrainX TestX];
+Learn.Verbosity = 1;
+Learn.Max_Iterations = 20;
+Learn.heldout = .1; % for tempered EM only, percentage of held out data
+Learn.Min_Likelihood_Change = 1;
+Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
+Learn.TEM = 0; %tempered or not tempered
+[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
 %% Following are Initializaitons
-% pwz = xlsread(strcat('pwz_common','.xls'));
-% pwz = csvread(strcat('pwz_common','.pwz'));
-pwz = Pw_z;
-Fs = pwz;
+% Pw_z = xlsread(strcat('pwz_common','.xls'));
+
+Fs = Pw_z;
 Ft = Fs;
-
 Gs = G0;
-
 Xs = TrainX;
 Xt = TestX;
 Xs = Xs/sum(sum(Xs));
 Xt = Xt/sum(sum(Xt));
+for i = 1:size(TrainX,2)
+    Xs(:,i) = Xs(:,i)/sum(Xs(:,i));
+end
+for i = 1:size(TestX,2)
+    Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
+end
 
 b = 1/(size(Gs,1));
-
+%%%Init SS
 SS = ones(size(Fs,2),size(Gs,2));
 for i = 1:size(SS,1)
     SS(i,:) = SS(i,:)/sum(SS(i,:));
 end
 Ss = SS;
 St = SS;
-
-% Gs = tempGt;
-%%%%zwj
 
 fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
@@ -107,15 +92,6 @@ for circleID = 1:numCircle
             end
         end
     end
-    %      for i = 1:size(Fs,1)
-    %         if sum(Fs(i,:))~= 0
-    %             Fs(i,:) = Fs(i,:)/sum(Fs(i,:));
-    %         else
-    %             for j = 1:size(Fs,2)
-    %                 Fs(i,j) = 1/(size(Fs,2));
-    %             end
-    %         end
-    %      end
     for i = 1:size(Fs,2)
         if sum(Fs(:,i))~= 0
             Fs(:,i) = Fs(:,i)/sum(Fs(:,i));
@@ -149,15 +125,6 @@ for circleID = 1:numCircle
             end
         end
     end
-    %      for i = 1:size(Ft,1)
-    %         if sum(Ft(i,:))~= 0
-    %             Ft(i,:) = Ft(i,:)/sum(Ft(i,:));
-    %         else
-    %             for j = 1:size(Ft,2)
-    %                 Ft(i,j) = 1/(size(Ft,2));
-    %             end
-    %         end
-    %     end
     for i = 1:size(Ft,2)
         if sum(Ft(:,i))~= 0
             Ft(:,i) = Ft(:,i)/sum(Ft(:,i));
@@ -229,6 +196,8 @@ for circleID = 1:numCircle
     
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
+return;
+
 xlswrite(strcat('Ft.xls'),[Ft']);
 xlswrite(strcat('St.xls'),St);
 xlswrite(strcat('St.xls'),Gt);
