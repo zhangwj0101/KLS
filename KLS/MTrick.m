@@ -10,7 +10,7 @@ for i = 1:length(TrainY)
         G0(i,2) = 1;
     end
 end
-
+K1 = 40;
 %%%逻辑回归
 TrainXY = scale_cols(TrainX,TrainY);
 fprintf('......start to train logistic regression model.........\n');
@@ -39,22 +39,22 @@ for i = 1:length(TestY)
     Gt(i,1) = ptemp(i);
     Gt(i,2) = 1 - ptemp(i);
 end
+
 %%%%逻辑回归结束
 
-%%%%start PLSA
-fprintf('......start to learn PLSA model.........\n');
-DataSetX  = [TrainX TestX];
-Learn.Verbosity = 1;
-Learn.Max_Iterations = 20;
-Learn.heldout = .1; % for tempered EM only, percentage of held out data
-Learn.Min_Likelihood_Change = 1;
-Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-Learn.TEM = 0; %tempered or not tempered
-[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-%% Following are Initializaitons
-% Pw_z = xlsread(strcat('pwz_common','.xls'));
+%%%NMF way
+r = numK;
+all = [TrainX TestX];
+[m,n] = size(all);
+Winit = abs(randn(m,r));
+Hinit = abs(randn(r,n));
+[W,H] = nmf(full(all),Winit,Hinit,0.0000000000001,25,8000);
 
-Fs = Pw_z;
+for id=1:size(W,2)
+    W(:,id) = W(:,id)/sum(W(:,id));
+end
+%%%%end NMF way
+Fs = W;
 Ft = Fs;
 Gs = G0;
 Xs = TrainX;
@@ -76,11 +76,56 @@ end
 Ss = SS;
 St = SS;
 
-fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
+
+F = W(:,1:K1);
+Fs = W(:,K1+1:size(W,2));
+Ft = Fs;
+
+S = SS(1:K1,:);
+Ss = SS(K1+1:size(SS,1),:);
+St = Ss;
+
+% fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
 for circleID = 1:numCircle
+    
+    %%%F
+    tempM = (F*S+Fs*Ss)*(Gs'*Gs+Gt'*Gt)*S';
+    tempM1 = (Xs*Gs+Xt*Gt)*S';
+    for i = 1:size(F,1)
+        for j = 1:size(F,2)
+            if tempM(i,j)~=0
+                F(i,j) = F(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                F(i,j) = 0;
+            end
+        end
+    end
+    for i = 1:size(F,2)
+        if sum(F(:,i))~= 0
+            F(:,i) = F(:,i)/sum(F(:,i));
+        else
+            for j = 1:size(F,2)
+                F(i,j) = 1/(size(F,2));
+            end
+        end
+    end
+    
+    %%S
+    tempM = F'*(F*S+ Fs*Ss)*(Gs'*Gs+Gt'*Gt);
+    tempM1 = F'*(Xs*Gs+Xt*Gt);
+    for i = 1:size(S,1)
+        for j = 1:size(S,2)
+            if tempM(i,j)~=0
+                S(i,j) = S(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                S(i,j) = 0;
+            end
+        end
+    end
+    
     %%Fs
-    tempM = (Fs*Ss*Gs'*Gs*Ss');
+    tempM = (F*S+Fs*Ss)*(Gs'*Gs)*Ss';
     tempM1 = Xs*Gs*Ss';
     for i = 1:size(Fs,1)
         for j = 1:size(Fs,2)
@@ -100,9 +145,10 @@ for circleID = 1:numCircle
             end
         end
     end
+    
     %%Ss
-    tempM = (Fs'*Fs*Ss*Gs'*Gs)+alpha*Ss;
-    tempM1 = Fs'*Xs*Gs+alpha*St;
+    tempM = (Fs'*(F*S+Fs*Ss)*Gs'*Gs);
+    tempM1 = Fs'*Xs*Gs;
     for i = 1:size(Ss,1)
         for j = 1:size(Ss,2)
             if tempM(i,j)~=0
@@ -112,8 +158,9 @@ for circleID = 1:numCircle
             end
         end
     end
+    
     %%  Ft
-    tempM = (Ft*St*Gt'*Gt*St');
+    tempM = (F*S+Ft*St)*Gt'*Gt*St';
     tempM1 = Xt*Gt*St';
     for i = 1:size(Ft,1)
         for j = 1:size(Ft,2)
@@ -133,12 +180,13 @@ for circleID = 1:numCircle
             end
         end
     end
+    
     %%St
     %%将Ss直接给St然后再迭代操作
     %     St = Ss;
     %%%新加
-    tempM = (Ft'*Ft*St*Gt'*Gt)+alpha*St;
-    tempM1 = Ft'*Xt*Gt+alpha*Ss;
+    tempM = Ft'*(F*S+Ft*St)*Gt'*Gt;
+    tempM1 = Ft'*Xt*Gt;
     for i = 1:size(St,1)
         for j = 1:size(St,2)
             if tempM(i,j)~=0
@@ -150,8 +198,9 @@ for circleID = 1:numCircle
     end
     
     %% Gt
-    tempM = (Gt*St'*Ft'*Ft*St);
-    tempM1 = Xt'*Ft*St;
+    tempFS = F*S+Ft*St;
+    tempM = (Gt*tempFS'*tempFS);
+    tempM1 = Xt'*tempFS;
     for i = 1:size(Gt,1)
         for j = 1:size(Gt,2)
             if tempM(i,j)~=0
@@ -171,16 +220,17 @@ for circleID = 1:numCircle
         end
     end
     
-    fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
-    if circleID == 1
-        tempf = fvalue;
-    end
-    if circleID > 1
-        if abs(tempf - fvalue) < 10^(-12)
-            break;
-        end
-        tempf = fvalue;
-    end
+    %     fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
+    fvalue = 0;
+%     if circleID == 1
+%         tempf = fvalue;
+%     end
+%     if circleID > 1
+%         if abs(tempf - fvalue) < 10^(-12)
+%             break;
+%         end
+%         tempf = fvalue;
+%     end
     
     pp = [];
     for i = 1:length(TestY)
@@ -196,6 +246,13 @@ for circleID = 1:numCircle
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
 return;
+x = 0:1:numCircle-1;
+figure
+plot(x,Results,'r');
+grid on
+xlabel('x');
+ylabel('Results');
+
 
 xlswrite(strcat('Ft.xls'),[Ft']);
 xlswrite(strcat('St.xls'),St);
