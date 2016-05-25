@@ -41,20 +41,17 @@ for i = 1:length(TestY)
 end
 %%%%Âß¼­»Ø¹é½áÊø
 
-%%%%start PLSA
-fprintf('......start to learn PLSA model.........\n');
-DataSetX  = [TrainX TestX];
-Learn.Verbosity = 1;
-Learn.Max_Iterations = 20;
-Learn.heldout = .1; % for tempered EM only, percentage of held out data
-Learn.Min_Likelihood_Change = 1;
-Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-Learn.TEM = 0; %tempered or not tempered
-[Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
-%% Following are Initializaitons
-% Pw_z = xlsread(strcat('pwz_common','.xls'));
+r = numK;
+all = [TrainX TestX];
+[m,n] = size(all);
+Winit = abs(randn(m,r));
+Hinit = abs(randn(r,n));
+[W,H] = nmf(full(all),Winit,Hinit,0.0000000000001,25,8000);
 
-Fs = Pw_z;
+for id=1:size(W,2)
+    W(:,id) = W(:,id)/sum(W(:,id));
+end
+Fs = W;
 Ft = Fs;
 Gs = G0;
 Xs = TrainX;
@@ -75,10 +72,10 @@ for i = 1:size(SS,1)
 end
 Ss = SS;
 St = SS;
-
 fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
 for circleID = 1:numCircle
+     
     %%Fs
     tempM = (Fs*Ss*Gs'*Gs*Ss');
     tempM1 = Xs*Gs*Ss';
