@@ -11,6 +11,8 @@ for i = 1:length(TrainY)
     end
 end
 K1 = 40;
+[size(TrainX)]
+[size(TestX)]
 %%%Âß¼­»Ø¹é
 TrainXY = scale_cols(TrainX,TrainY);
 fprintf('......start to train logistic regression model.........\n');
@@ -66,6 +68,10 @@ end
 for i = 1:size(TestX,2)
     Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
 end
+
+wordCount(:,1) = sum(Xs~=0,2);
+wordCount(:,2) = sum(Xt~=0,2);
+xlswrite('wordCount.xls',wordCount);
 
 b = 1/(size(Gs,1));
 %%%Init SS

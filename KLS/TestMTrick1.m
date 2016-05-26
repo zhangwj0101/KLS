@@ -1,15 +1,14 @@
 clear all;
 
-TrainX = load('C:/mydata_add/en_fr_books_music/Train.data');
+TrainX = load('C:/NMTF/Train.data');
 TrainX = spconvert(TrainX);
-TrainY = load('C:/mydata_add/en_fr_books_music/Train.label');
+TrainY = load('C:/NMTF/Train.label');
 TrainY = TrainY';
-TestX = load('C:/mydata_add/en_fr_books_music/Test.data');
+TestX = load('C:/NMTF/Test.data');
 TestX = spconvert(TestX);
 %%
-TestY = load('C:/mydata_add/en_fr_books_music/Test.label');
+TestY = load('C:/NMTF/Test.label');
 TestY = TestY';
-
 for id = 1:length(TrainY)
     if TrainY(id) == 2
         TrainY(id) = -1;
