@@ -1,5 +1,5 @@
 
-str = 'C:/mydata_add/';
+str = 'E:\cls-acl10-processed_cutshortdoc\mydata_add_withtraintest/';
 FileList=dir(str);
 ff = 1;
 for rr=1:length(FileList)
@@ -16,7 +16,7 @@ for rr=1:length(filedors)
     testPath = strcat(base,'/Test.data');
     testLabelPath = strcat(base,'/Test.label');
     fprintf('%s\n',base);
-%     clear all;
+    %     clear all;
     TrainX = load(trainPath);
     TrainX = spconvert(TrainX);
     TrainY = load(trainLabelPath);
@@ -44,9 +44,11 @@ for rr=1:length(filedors)
     numCircle = 180;
     best = [];
     index= 1;
+    
     Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
-    [res] = xlsread(strcat('Results.xls'));
-    xlswrite(strcat('Results.xls'),[res;Results]);
+    [res] = xlsread(strcat('LR.xls'));
+    xlswrite(strcat('LR.xls'),[res;Results*100]);
+    
 end
 % x = 0:1:numCircle-1;
 % figure

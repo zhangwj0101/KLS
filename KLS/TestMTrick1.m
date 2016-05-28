@@ -1,13 +1,13 @@
 clear all;
 
-TrainX = load('C:\NMTF/Train.data');
+TrainX = load('C:\mydata_add_withtraintest\en_jp_books_books/Train.data');
 TrainX = spconvert(TrainX);
-TrainY = load('C:\NMTF/Train.label');
+TrainY = load('C:\mydata_add_withtraintest\en_jp_books_books/Train.label');
 TrainY = TrainY';
-TestX = load('C:\NMTF/Test.data');
+TestX = load('C:\mydata_add_withtraintest\en_jp_books_books/Test.data');
 TestX = spconvert(TestX);
 %%
-TestY = load('C:\NMTF/Test.label');
+TestY = load('C:\mydata_add_withtraintest\en_jp_books_books/Test.label');
 TestY = TestY';
 
 for id = 1:length(TrainY)
@@ -29,6 +29,7 @@ numCircle = 180;
 best = [];
 index= 1;
 Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+
 return ;
 for tempalph=0:0.5:10
     Results = MTrick(TrainX,TrainY,TestX,TestY,tempalph,beta,numK,numCircle);
