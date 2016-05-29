@@ -78,7 +78,7 @@ for circleID = 1:numCircle
      
     %%Fs
     tempM = (Fs*Ss*Gs'*Gs*Ss');
-    tempM1 = Xs*Gs*Ss';
+    tempM1 = Xs*Gs*Ss' ;
     for i = 1:size(Fs,1)
         for j = 1:size(Fs,2)
             if tempM(i,j)~=0
@@ -110,7 +110,7 @@ for circleID = 1:numCircle
         end
     end
     %%  Ft
-    tempM = (Ft*St*Gt'*Gt*St');
+    tempM = (Ft*St*Gt'*Gt*St') ;
     tempM1 = Xt*Gt*St';
     for i = 1:size(Ft,1)
         for j = 1:size(Ft,2)
@@ -192,16 +192,3 @@ for circleID = 1:numCircle
     
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
-return;
-
-xlswrite(strcat('Ft.xls'),[Ft']);
-xlswrite(strcat('St.xls'),St);
-xlswrite(strcat('St.xls'),Gt);
-% [res] = xlsread(strcat('iteration_F.xls'));
-% xlswrite(strcat('iteration_F.xls'),[res;Results;lvalues]);
-% x = 0:1:numCircle-1;
-% figure
-% plot(x,lvalues,'r');
-% grid on
-% xlabel('x');
-% ylabel('Results');

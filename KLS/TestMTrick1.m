@@ -1,13 +1,13 @@
 clear all;
 
-TrainX = load('C:\mydata_add_withtraintest\en_jp_books_books/Train.data');
+TrainX = load('C:\NMTF/Train.data');
 TrainX = spconvert(TrainX);
-TrainY = load('C:\mydata_add_withtraintest\en_jp_books_books/Train.label');
+TrainY = load('C:\NMTF/Train.label');
 TrainY = TrainY';
-TestX = load('C:\mydata_add_withtraintest\en_jp_books_books/Test.data');
+TestX = load('C:\NMTF/Test.data');
 TestX = spconvert(TestX);
 %%
-TestY = load('C:\mydata_add_withtraintest\en_jp_books_books/Test.label');
+TestY = load('C:\NMTF/Test.label');
 TestY = TestY';
 
 for id = 1:length(TrainY)

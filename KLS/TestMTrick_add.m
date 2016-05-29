@@ -1,5 +1,5 @@
 
-str = 'E:\cls-acl10-processed_cutshortdoc\mydata_add_withtraintest/';
+str = 'C:\mydata_add_withtraintest_cutshortdoc/';
 FileList=dir(str);
 ff = 1;
 for rr=1:length(FileList)
@@ -44,11 +44,15 @@ for rr=1:length(filedors)
     numCircle = 180;
     best = [];
     index= 1;
-    
-    Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
-    [res] = xlsread(strcat('LR.xls'));
-    xlswrite(strcat('LR.xls'),[res;Results*100]);
-    
+    filename = regexp(base, '/', 'split');
+    wname = char(filename(size(filename,2)));
+
+    xlswrite(strcat(wname,'.xls'),[1:1:numCircle]);
+    for time=1:10
+        Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+        [res] = xlsread(strcat(wname,'.xls'));
+        xlswrite(strcat(wname,'.xls'),[res;Results]);
+    end
 end
 % x = 0:1:numCircle-1;
 % figure
