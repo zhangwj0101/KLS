@@ -11,8 +11,6 @@ for i = 1:length(TrainY)
     end
 end
 K1 = 40;
-[size(TrainX)]
-[size(TestX)]
 %%%逻辑回归
 TrainXY = scale_cols(TrainX,TrainY);
 fprintf('......start to train logistic regression model.........\n');
@@ -69,9 +67,7 @@ for i = 1:size(TestX,2)
     Xt(:,i) = Xt(:,i)/sum(Xt(:,i));
 end
 
-wordCount(:,1) = sum(Xs~=0,2);
-wordCount(:,2) = sum(Xt~=0,2);
-xlswrite('wordCount.xls',wordCount);
+
 
 b = 1/(size(Gs,1));
 %%%Init SS
@@ -82,56 +78,59 @@ end
 Ss = SS;
 St = SS;
 
-
-F = W(:,1:K1);
+%%%Fs1,Fs,Ss1,Ss
+Fs1 = W(:,1:K1);
 Fs = W(:,K1+1:size(W,2));
+Ft1 = Fs1;
 Ft = Fs;
 
-S = SS(1:K1,:);
+Ss1 = SS(1:K1,:);
 Ss = SS(K1+1:size(SS,1),:);
+St1 = Ss1;
 St = Ss;
 
 % fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
 for circleID = 1:numCircle
     
-    %%%F
-    tempM = (F*S+Fs*Ss)*(Gs'*Gs+Gt'*Gt)*S';
-    tempM1 = (Xs*Gs+Xt*Gt)*S';
-    for i = 1:size(F,1)
-        for j = 1:size(F,2)
+    %%%Fs1,Fs,Ss1,Ss
+    %%%Fs1
+    tempM = (Fs1*Ss1+Fs*Ss)*(Gs'*Gs)*Ss1' + alpha*Fs1;
+    tempM1 = (Xs*Gs)*Ss1' + alpha*Ft1;
+    for i = 1:size(Fs1,1)
+        for j = 1:size(Fs1,2)
             if tempM(i,j)~=0
-                F(i,j) = F(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                Fs1(i,j) = Fs1(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                F(i,j) = 0;
+                Fs1(i,j) = 0;
             end
         end
     end
-    for i = 1:size(F,2)
-        if sum(F(:,i))~= 0
-            F(:,i) = F(:,i)/sum(F(:,i));
+    for i = 1:size(Fs1,2)
+        if sum(Fs1(:,i))~= 0
+            Fs1(:,i) = Fs1(:,i)/sum(Fs1(:,i));
         else
-            for j = 1:size(F,2)
-                F(i,j) = 1/(size(F,2));
+            for j = 1:size(Fs1,2)
+                Fs1(i,j) = 1/(size(Fs1,2));
             end
         end
     end
     
-    %%S
-    tempM = F'*(F*S+ Fs*Ss)*(Gs'*Gs+Gt'*Gt);
-    tempM1 = F'*(Xs*Gs+Xt*Gt);
-    for i = 1:size(S,1)
-        for j = 1:size(S,2)
+    %%Ss1
+    tempM = Fs1'*(Fs1*Ss1+ Fs*Ss)*(Gs'*Gs) + alpha *Ss1;
+    tempM1 = Fs1'*(Xs*Gs) + alpha*St1;
+    for i = 1:size(Ss1,1)
+        for j = 1:size(Ss1,2)
             if tempM(i,j)~=0
-                S(i,j) = S(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+                Ss1(i,j) = Ss1(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
             else
-                S(i,j) = 0;
+                Ss1(i,j) = 0;
             end
         end
     end
     
     %%Fs
-    tempM = (F*S+Fs*Ss)*(Gs'*Gs)*Ss';
+    tempM = (Fs1*Ss1+Fs*Ss)*(Gs'*Gs)*Ss';
     tempM1 = Xs*Gs*Ss';
     for i = 1:size(Fs,1)
         for j = 1:size(Fs,2)
@@ -153,7 +152,7 @@ for circleID = 1:numCircle
     end
     
     %%Ss
-    tempM = (Fs'*(F*S+Fs*Ss)*Gs'*Gs);
+    tempM = (Fs'*(Fs1*Ss1+Fs*Ss)*Gs'*Gs);
     tempM1 = Fs'*Xs*Gs;
     for i = 1:size(Ss,1)
         for j = 1:size(Ss,2)
@@ -165,8 +164,48 @@ for circleID = 1:numCircle
         end
     end
     
+    
+    %%  Ft1
+    tempM = (Ft1*St1+Ft*St)*Gt'*Gt*St1' + alpha*Ft1;
+    tempM1 = Xt*Gt*St1'+alpha*Fs1; 
+    for i = 1:size(Ft1,1)
+        for j = 1:size(Ft1,2)
+            if tempM(i,j)~=0
+                Ft1(i,j) = Ft1(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                Ft1(i,j) =0;
+            end
+        end
+    end
+    for i = 1:size(Ft1,2)
+        if sum(Ft1(:,i))~= 0
+            Ft1(:,i) = Ft1(:,i)/sum(Ft1(:,i));
+        else
+            for j = 1:size(Ft1,2)
+                Ft1(i,j) = 1/(size(Ft1,2));
+            end
+        end
+    end
+    
+    %%St1
+    %%将Ss直接给St然后再迭代操作
+    %     St = Ss;
+    %%%新加
+    tempM = Ft1'*(Ft1*St1+Ft*St)*Gt'*Gt + alpha * St1;
+    tempM1 = Ft1'*Xt*Gt + alpha*Ss1;
+    for i = 1:size(St1,1)
+        for j = 1:size(St1,2)
+            if tempM(i,j)~=0
+                St1(i,j) = St1(i,j)*(tempM1(i,j)/tempM(i,j))^(0.5);
+            else
+                St1(i,j) = 0;
+            end
+        end
+    end
+    
+    
     %%  Ft
-    tempM = (F*S+Ft*St)*Gt'*Gt*St';
+    tempM = (Ft1*St1+Ft*St)*Gt'*Gt*St';
     tempM1 = Xt*Gt*St';
     for i = 1:size(Ft,1)
         for j = 1:size(Ft,2)
@@ -191,7 +230,7 @@ for circleID = 1:numCircle
     %%将Ss直接给St然后再迭代操作
     %     St = Ss;
     %%%新加
-    tempM = Ft'*(F*S+Ft*St)*Gt'*Gt;
+    tempM = Ft'*(Ft1*St1+Ft*St)*Gt'*Gt;
     tempM1 = Ft'*Xt*Gt;
     for i = 1:size(St,1)
         for j = 1:size(St,2)
@@ -204,7 +243,7 @@ for circleID = 1:numCircle
     end
     
     %% Gt
-    tempFS = F*S+Ft*St;
+    tempFS = Ft1*St1+Ft*St;
     tempM = (Gt*tempFS'*tempFS);
     tempM1 = Xt'*tempFS;
     for i = 1:size(Gt,1)
@@ -251,18 +290,8 @@ for circleID = 1:numCircle
     
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
-return;
-x = 0:1:numCircle-1;
-figure
-plot(x,Results,'r');
-grid on
-xlabel('x');
-ylabel('Results');
 
 
-xlswrite(strcat('Ft.xls'),[Ft']);
-xlswrite(strcat('St.xls'),St);
-xlswrite(strcat('St.xls'),Gt);
 % [res] = xlsread(strcat('iteration_F.xls'));
 % xlswrite(strcat('iteration_F.xls'),[res;Results;lvalues]);
 % x = 0:1:numCircle-1;
