@@ -1,5 +1,5 @@
 
-str = 'C:/mydata_add/';
+str = 'C:\mydata_add_withtraintest_cutshortdoc1/';
 FileList=dir(str);
 ff = 1;
 for rr=1:length(FileList)
@@ -16,7 +16,7 @@ for rr=1:length(filedors)
     testPath = strcat(base,'/Test.data');
     testLabelPath = strcat(base,'/Test.label');
     fprintf('%s\n',base);
-%     clear all;
+    %     clear all;
     TrainX = load(trainPath);
     TrainX = spconvert(TrainX);
     TrainY = load(trainLabelPath);
@@ -44,9 +44,15 @@ for rr=1:length(filedors)
     numCircle = 180;
     best = [];
     index= 1;
-    Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
-    [res] = xlsread(strcat('Results.xls'));
-    xlswrite(strcat('Results.xls'),[res;Results]);
+    filename = regexp(base, '/', 'split');
+    wname = char(filename(size(filename,2)));
+
+    xlswrite(strcat(wname,'.xls'),[1:1:numCircle]);
+    for time=1:10
+        Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+        [res] = xlsread(strcat(wname,'.xls'));
+        xlswrite(strcat(wname,'.xls'),[res;Results]);
+    end
 end
 % x = 0:1:numCircle-1;
 % figure
