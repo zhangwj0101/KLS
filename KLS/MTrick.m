@@ -74,6 +74,7 @@ Ss = SS;
 St = SS;
 fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
 tempf = 0;
+
 for circleID = 1:numCircle
      
     %%Fs
@@ -188,7 +189,8 @@ for circleID = 1:numCircle
         end
     end
     Results(circleID) = getResult(pp,TestY)*100;
-    %     lvalues(circleID) = trace(Ft'*Ft-2*Ft'*Fs+Fs'*Fs);
-    
+    lvalues(circleID) = fvalue;
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
+tempRes = [Results;lvalues]
+Results = tempRes;

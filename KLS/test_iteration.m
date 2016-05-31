@@ -1,5 +1,7 @@
 
-str = 'C:\mydata_add_withtraintest_cutshortdoc/';
+str = 'E:\cls-acl10-processed_cutshortdoc\test_iteration/';
+
+basetypePath='iteration/';
 FileList=dir(str);
 ff = 1;
 for rr=1:length(FileList)
@@ -45,18 +47,9 @@ for rr=1:length(filedors)
     best = [];
     index= 1;
     filename = regexp(base, '/', 'split');
-    wname = char(filename(size(filename,2)));
-
+    wname = strcat(basetypePath,char(filename(size(filename,2))));
     xlswrite(strcat(wname,'.xls'),[1:1:numCircle]);
-    for time=1:10
-        Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
-        [res] = xlsread(strcat(wname,'.xls'));
-        xlswrite(strcat(wname,'.xls'),[res;Results(1,:)]);
-    end
+    Results = MTrick(TrainX,TrainY,TestX,TestY,alpha,beta,numK,numCircle);
+    [res] = xlsread(strcat(wname,'.xls'));
+    xlswrite(strcat(wname,'.xls'),[res;Results]);
 end
-% x = 0:1:numCircle-1;
-% figure
-% plot(x,Results,'r');
-% grid on
-% xlabel('x');
-% ylabel('Results');
