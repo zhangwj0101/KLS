@@ -89,7 +89,17 @@ Ss = SS(K1+1:size(SS,1),:);
 St1 = Ss1;
 St = Ss;
 
-% fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
+tempFs = [Fs1 Fs];
+tempSs = [Ss1;Ss];
+tempFt = [Ft1 Ft];
+tempSt = [St1;St];
+
+fvalue = 0;
+v1 = trace(Xs'*Xs-2*Xs'*tempFs*tempSs*Gs'+Gs*tempSs'*tempFs'*tempFs*tempSs*Gs');
+v2 = trace(Xt'*Xt-2*Xt'*tempFt*tempSt*Gt'+Gt*tempSt'*tempFt'*tempFt*tempSt*Gt');
+v3 = alpha*trace(Fs1'*Fs1-2*Fs1'*Ft1+Ft1'*Ft1);
+v4 = alpha*trace(Ss1'*Ss1-2*Ss1'*St1+St1'*St1);
+fvalue = v1+v2+v3+v4;
 tempf = 0;
 for circleID = 1:numCircle
     
@@ -167,7 +177,7 @@ for circleID = 1:numCircle
     
     %%  Ft1
     tempM = (Ft1*St1+Ft*St)*Gt'*Gt*St1' + alpha*Ft1;
-    tempM1 = Xt*Gt*St1'+alpha*Fs1; 
+    tempM1 = Xt*Gt*St1'+alpha*Fs1;
     for i = 1:size(Ft1,1)
         for j = 1:size(Ft1,2)
             if tempM(i,j)~=0
@@ -265,17 +275,25 @@ for circleID = 1:numCircle
         end
     end
     
-    %     fvalue = trace(Xs'*Xs-2*Xs'*Fs*Ss*Gs'+Gs*Ss'*Fs'*Fs*Ss*Gs')+trace(Xt'*Xt-2*Xt'*Ft*St*Gt'+Gt*St'*Ft'*Ft*St*Gt')+alpha*trace(St'*St-2*St'*Ss+Ss'*Ss);
-    fvalue = 0;
-%     if circleID == 1
-%         tempf = fvalue;
-%     end
-%     if circleID > 1
-%         if abs(tempf - fvalue) < 10^(-12)
-%             break;
-%         end
-%         tempf = fvalue;
-%     end
+    tempFs = [Fs1 Fs];
+    tempSs = [Ss1;Ss];
+    tempFt = [Ft1 Ft];
+    tempSt = [St1;St];
+    v1 = trace(Xs'*Xs-2*Xs'*tempFs*tempSs*Gs'+Gs*tempSs'*tempFs'*tempFs*tempSs*Gs');
+    v2 = trace(Xt'*Xt-2*Xt'*tempFt*tempSt*Gt'+Gt*tempSt'*tempFt'*tempFt*tempSt*Gt');
+    v3 = alpha*trace(Fs1'*Fs1-2*Fs1'*Ft1+Ft1'*Ft1);
+    v4 = alpha*trace(Ss1'*Ss1-2*Ss1'*St1+St1'*St1);
+    fvalue = v1+v2+v3+v4;
+    tempf = 0;
+    if circleID == 1
+        tempf = fvalue;
+    end
+    if circleID > 1
+        if abs(tempf - fvalue) < 10^(-12)
+            break;
+        end
+        tempf = fvalue;
+    end
     
     pp = [];
     for i = 1:length(TestY)
@@ -286,11 +304,12 @@ for circleID = 1:numCircle
         end
     end
     Results(circleID) = getResult(pp,TestY)*100;
-    %     lvalues(circleID) = trace(Ft'*Ft-2*Ft'*Fs+Fs'*Fs);
+    lvalues(circleID) = fvalue;
     
     fprintf('the %g iteration is %g, the max is %g. the value of objective is %g\n',circleID,getResult(pp,TestY),max(Results),fvalue);
 end
-
+tempRes = [Results;lvalues]
+Results = tempRes;
 
 % [res] = xlsread(strcat('iteration_F.xls'));
 % xlswrite(strcat('iteration_F.xls'),[res;Results;lvalues]);
